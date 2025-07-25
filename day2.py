@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List
 
 app = FastAPI()
@@ -8,7 +8,7 @@ app = FastAPI()
 class User(BaseModel):
     id: int
     name: str
-    email: str
+    email: EmailStr
     
 #Dữ liệu giả lập
 users: List[User] = [
