@@ -41,7 +41,7 @@ class BookOut(Book):
 def create_book(book: Book):
     conn = sqlite3.connect('books.db')
     cursor = conn.cursor()
-    cursor.execute("Insert into books (title, author, year) values(?, ?, ?)", (book.title, book.author, book.year))
+    cursor.execute("INSERT INTO books (title, author, year) VALUES(?, ?, ?)", (book.title, book.author, book.year))
     conn.commit()
     book_id = cursor.lastrowid
     conn.close()
@@ -51,7 +51,7 @@ def create_book(book: Book):
 def get_books():
     conn = sqlite3.connect('books.db')
     cursor = conn.cursor()
-    cursor.execute("Select * from books")
+    cursor.execute("SELECT * FROM books")
     rows = cursor.fetchall()
     conn.close()
     return [{'id': row[0], 'title': row[1], 'author': row[2], 'year': row[3]} for row in rows]
