@@ -35,6 +35,36 @@ def get_contacts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
+@app.get("/contacts/search",response_model=list[ContactOut])
+def search_contacts(name: str):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT id, name, phone FROM contacts WHERE name LIKE %s",(f"%{name}%",))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        if not rows:
+            raise HTTPException(status_code=404,detail="Contacts not found")
+        return [{"id": row[0], "name": row[1], "phone": row[2]}for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+@app.get("/contacts/{ct_id}",response_model=ContactOut)
+def get_ct_with_id(ct_id: int):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT id, name, phone FROM contacts WHERE id = %s",(ct_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            raise HTTPException(status_code=404,detail="Contacts not found")
+        return {"id": row[0], "name": row[1], "phone": row[2]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
 @app.post("/contacts",response_model=ContactOut)
 def insert_contact(contact: Contact):
     try:
