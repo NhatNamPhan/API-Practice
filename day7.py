@@ -68,10 +68,10 @@ def delete_task(task_id: int):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM tasks WHERE id = ?",(task_id,))
     conn.commit()
-    if cursor.rowcount == 0:
-        conn.close()
-        raise HTTPException(status_code=404,detail="Task not found")
+    cursor.close()
     conn.close()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404,detail="Task not found")
     return {"message": f"Task with id {task_id} has been deleted"}
 
 @app.get("/task/incomplete",response_model=list[TaskOut])

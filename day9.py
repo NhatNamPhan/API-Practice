@@ -94,3 +94,68 @@ def get_prod(prod_id: int):
         return {"id": row[0], "name": row[1], "price": float(row[2]), "category": row[3]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.get("/categories/{cate_id}/products",response_model=list[ProductOut])
+def get_prod_with_cate(cate_id: int):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT p.id, p.name, p.price, c.name
+            FROM products p
+            JOIN categories c
+            ON p.category_id = c.id
+            WHERE c.id = %s        
+                    ''',(cate_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        if not rows:
+            raise HTTPException(status_code=404, detail="No product in category")
+        return [{"id": row[0], "name": row[1], "price": float(row[2]), "category": row[3]} for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+@app.put("/products/{prod_id}",response_model=ProductOut)
+def update_prod(prod_id: int, prod: ProductIn):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            UPDATE products 
+            SET name = %s, price = %s, category_id = %s 
+            WHERE id = %s
+            RETURNING id, name, price, category_id
+            ''',(prod.name,prod.price,prod.category_id,prod_id))
+        row = cur.fetchone()
+        conn.commit()
+        if not row:
+            cur.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Product not found")
+        cur.execute("SELECT name FROM categories WHERE id = %s",(row[3],))
+        cate_name = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return {"id": row[0], "name": row[1], "price": float(row[2]), "category": cate_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+@app.delete("/products/{prod_id}")
+def deleted_prod(prod_id: int):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            DELETE FROM products
+            WHERE id = %s        
+                    ''',(prod_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return {"message": f"Product with id {prod_id} has been deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        
